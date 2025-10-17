@@ -2,13 +2,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.InputMismatchException;
+import java.io.*;
 
 public class Main {
-    private static ArrayList<Student> students = new ArrayList<>();
+    private static final ArrayList<Student> students = new ArrayList<>();
     private static int nextId = 1;
-    private static Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner = new Scanner(System.in);
+
+    private static final String FILE_NAME = "students.txt";
 
     public static void main(String[] args) {
+        loadStudentsFromFile();
         initialChoices();
     }
 
@@ -50,13 +54,21 @@ public class Main {
         System.out.print("Enter name: ");
         String name = scanner.nextLine();
 
+        for (Student s : students){
+            if(s.getName().equals(name)){
+                System.out.println("Name already existing!");
+                addStudent();
+                return;
+            }
+        }
+
         System.out.print("Enter age: ");
         int age = scanner.nextInt();
         scanner.nextLine();
 
         Student student = new Student(nextId++, name, age);
         students.add(student);
-
+        saveStudentsToFile();
         System.out.println("✅ Student added successfully!");
     }
 
@@ -111,20 +123,11 @@ public class Main {
                     }
 
                     switch (updateChoice){
-                        case 1 -> {
-                            updateStudentName(id);
-                        }
-                        case 2 -> {
-                            updateStudentAge(id);
-                        }
-                        case 3 -> {
-                            updateStudentStatus(id);
-                        }
+                        case 1 -> updateStudentName(id);
+                        case 2 -> updateStudentAge(id);
+                        case 3 -> updateStudentStatus(id);
                         case 4 -> initialChoices();
-
-                        default -> {
-                            System.out.println("Invalid choice. Try again.");
-                        }
+                        default -> System.out.println("Invalid choice. Try again.");
                     }
 
                     break;
@@ -145,7 +148,8 @@ public class Main {
         for (Student s : students){
             if(s.getId() == studentID){
                 s.setName(newStudentName);
-                System.out.println("✅ Student ID "+ studentID +" age updated!");
+                System.out.println("✅ Student ID "+ studentID +" name updated!");
+                saveStudentsToFile();
                 updateStudentName(studentID);
                 return;
             }
@@ -155,13 +159,14 @@ public class Main {
     }
 
     private static void updateStudentAge(int studentID){
-        System.out.print("Please enter new age for student ID: " + studentID + ": ");
+        System.out.print("Please enter new age for student ID " + studentID + ": ");
         int newStudentAge = scanner.nextInt();
 
         for (Student s : students){
             if(s.getId() == studentID){
                 s.setAge(newStudentAge);
                 System.out.println("✅ Student "+ s.getName() +" age updated!");
+                saveStudentsToFile();
                 return;
             }
         }
@@ -182,6 +187,7 @@ public class Main {
             if(s.getId() == studentID){
                 s.setStatus(newStudentStatus);
                 System.out.println("✅ Student "+ s.getName() +" status updated!");
+                saveStudentsToFile();
                 return;
             }
         }
@@ -198,11 +204,51 @@ public class Main {
             if (s.getId() == id) {
                 students.remove(s);
                 System.out.println("🗑️ Student deleted!");
+                saveStudentsToFile();
                 return;
             }
         }
 
         System.out.println("❌ Student not found!");
+    }
+
+    private static void saveStudentsToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+            for (Student s : students) {
+                // Write student data separated by commas
+                writer.write(s.getId() + "," + s.getName() + "," + s.getAge() + "," + s.getStatus());
+                writer.newLine();
+            }
+//            System.out.println("✅ Students saved successfully!");
+        } catch (IOException e) {
+            //.out.println("❌ Error saving students: " + e.getMessage());
+        }
+    }
+
+    private static void loadStudentsFromFile() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) return; // No file yet on first run
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                int id = Integer.parseInt(data[0]);
+                String name = data[1];
+                int age = Integer.parseInt(data[2]);
+                boolean status = Boolean.parseBoolean(data[3]);
+                students.add(new Student(id, name, age, status));
+            }
+
+            // Ensure nextId starts after the last used ID
+            if (!students.isEmpty()) {
+                nextId = students.getLast().getId() + 1;
+            }
+
+            System.out.println("📂 Students loaded from file!");
+        } catch (IOException e) {
+            System.out.println("❌ Error loading students: " + e.getMessage());
+        }
     }
 
 

@@ -5,10 +5,14 @@ public class Student {
     private boolean status;
 
     public Student(int id, String name, int age) {
+        this(id,name,age, true);
+    }
+
+    public Student(int id, String name, int age, boolean status){
         this.id = id;
         this.name = name;
         this.age = age;
-        this.status = true; //initially true
+        this.status = status;
     }
 
     // Getters and Setters
@@ -32,16 +36,16 @@ public class Student {
         return age;
     }
 
+    public boolean getStatus() {
+        return status;
+    }
+
     public void setAge(int age) {
         this.age = age;
     }
 
     public void setStatus(String status){
-        if(status.equals("active")){
-            this.status = true;
-        }else{
-            this.status = false;
-        }
+        this.status = status.equals("active");
     }
 
     @Override
